@@ -1,0 +1,25 @@
+name: "Publish Semgrep SARIF to Pixee"
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: "Publish Semgrep SARIF to Pixee"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Publish Semgrep SARIF to Pixee"
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Assume the JSON file is in the root of the repository
+          PIXEE_URI="https://cvy4aat49k.execute-api.us-east-1.amazonaws.com/prod"
+
+          SECRET=$(curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://app.pixee.ai" | jq -j '.value')
+          API_RESPONSE=$(curl -v -X PUT -H "Authorization: Bearer $SECRET" -H "Content-Type: multipart/form-data" -F "file=@juiceshop.sarif.json" "$PIXEE_URI/analysis-input/drdavella/juice-shop/$GITHUB_SHA/semgrep")
+          echo "$API_RESPONSE"
